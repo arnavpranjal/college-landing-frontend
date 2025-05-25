@@ -41,11 +41,11 @@ const formSchema = z.object({
   }),
 });
 
-interface HeroSectionProps {
-  onApplyNowClick: () => void;
-}
+// interface HeroSectionProps {
+//   onApplyNowClick: () => void;
+// }
 
-const HeroSection: React.FC<HeroSectionProps> = ({ onApplyNowClick }) => {
+const HeroSection: React.FC/*<HeroSectionProps>*/ = (/*{ onApplyNowClick }*/) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleApplyNowClick = () => {

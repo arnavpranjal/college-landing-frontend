@@ -14,7 +14,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  // DialogDescription, // Commented out as it's unused
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -51,15 +51,15 @@ const formSchema = z.object({
 interface RegistrationDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
-  description?: string;
+  // title?: string; // Commented out as it's unused
+  // description?: string; // Commented out as it's unused
 }
 
 const RegistrationDialog: React.FC<RegistrationDialogProps> = ({ 
   isOpen, 
   onClose, 
-  title = "Register Your Interest",
-  description = "Fill out the form below and we'll get back to you with more information about our programs."
+  // title = "Register Your Interest", // Commented out as it's unused
+  // description = "Fill out the form below and we'll get back to you with more information about our programs." // Commented out as it's unused
 }) => {
   const [isLoading, setIsLoading] = useState(false);
 

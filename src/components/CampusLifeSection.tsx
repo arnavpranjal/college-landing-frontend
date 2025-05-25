@@ -1,7 +1,7 @@
 // src/components/CampusLifeSection.tsx
 import React from 'react';
 import Image from 'next/image';
-import { Zap, BookOpen, Home, Users, Music } from 'lucide-react'; // Example icons
+import { Zap, BookOpen, Home, Users } from 'lucide-react'; // Example icons
 
 interface CampusFeature {
   id: string;

@@ -26,7 +26,7 @@ export default function HomePage() {
   return (
     <> {/* Use a Fragment as we'll have multiple top-level sections */}
       <Header onRegisterClick={handleOpenDialog} />
-      <HeroSection onApplyNowClick={handleOpenDialog} />
+      <HeroSection />
       <ProgramsOffered onApplyClick={handleOpenDialog} />
       <RecruitersSection />
       <EligibilityCriteria onEnquireClick={handleOpenDialog} />

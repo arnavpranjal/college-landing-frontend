@@ -100,7 +100,7 @@ const TestimonialsSection = () => {
               <Quote className="w-10 h-10 text-blue-500 mb-4 transform rotate-180" />
               
               <p className="text-xs sm:text-sm md:text-base text-gray-600 italic leading-relaxed mb-6 flex-grow">
-                "{testimonial.quote}"
+                &ldquo;{testimonial.quote}&rdquo;
               </p>
 
               <div className="mt-auto pt-4 border-t border-slate-200 w-full">
@@ -162,7 +162,7 @@ const TestimonialsSection = () => {
                 <Quote className="w-8 h-8 text-blue-500 mb-4 transform rotate-180" />
                 
                 <p className="text-gray-600 italic leading-relaxed mb-6 flex-grow text-sm">
-                  "{testimonial.quote}"
+                  &ldquo;{testimonial.quote}&rdquo;
                 </p>
 
                 <div className="mt-auto pt-4 border-t border-slate-200 w-full">
