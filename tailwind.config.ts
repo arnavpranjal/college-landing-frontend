@@ -58,5 +58,5 @@ export default {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate") , require('@tailwindcss/line-clamp'),  require('tailwind-scrollbar')({ nocompatible: true }),],
 } satisfies Config;
