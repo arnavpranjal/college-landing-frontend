@@ -1,7 +1,7 @@
 // src/components/HeroSection.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -41,12 +41,73 @@ const formSchema = z.object({
   }),
 });
 
-// interface HeroSectionProps {
-//   onApplyNowClick: () => void;
-// }
+interface HeroSectionProps {
+  collegeName: string;
+  onImageLoaded?: () => void;
+}
 
-const HeroSection: React.FC/*<HeroSectionProps>*/ = (/*{ onApplyNowClick }*/) => {
+const HeroSection: React.FC<HeroSectionProps> = ({ collegeName, onImageLoaded }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [heroImageUrl, setHeroImageUrl] = useState<string>('');
+  const [imageLoading, setImageLoading] = useState(true);
+
+  // Function to check if an image exists with timeout
+  const checkImageExists = (url: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, 3000); // 3 second timeout
+      
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+      img.onerror = () => {
+        clearTimeout(timeout);
+        resolve(false);
+      };
+      img.src = url;
+    });
+  };
+
+  // Find the available hero image format (parallel loading)
+  useEffect(() => {
+    const findHeroImage = async () => {
+      setImageLoading(true);
+      const imageFormats = ['png','jpg', 'jpeg', 'webp'];
+      const basePath = `/${collegeName}/backgroundImage/hero`;
+      
+      // Check all formats in parallel
+      const promises = imageFormats.map(async (format) => {
+        const imageUrl = `${basePath}.${format}`;
+        const exists = await checkImageExists(imageUrl);
+        return exists ? imageUrl : null;
+      });
+      
+      try {
+        const results = await Promise.all(promises);
+        const foundImage = results.find(url => url !== null);
+        
+        if (foundImage) {
+          setHeroImageUrl(foundImage);
+        } else {
+          setHeroImageUrl('');
+        }
+      } catch (error) {
+        console.warn('Error loading hero image:', error);
+        setHeroImageUrl('');
+      } finally {
+        setImageLoading(false);
+        // Notify parent component that image loading is complete
+        onImageLoaded?.();
+      }
+    };
+
+    if (collegeName) {
+      findHeroImage();
+    }
+  }, [collegeName, onImageLoaded]);
 
   const handleApplyNowClick = () => {
     const formSection = document.getElementById('registration-form-actual');
@@ -107,12 +168,20 @@ const HeroSection: React.FC/*<HeroSectionProps>*/ = (/*{ onApplyNowClick }*/) =>
   return (
     <section
       className="relative bg-cover bg-center md:bg-cover bg-no-repeat py-16 md:py-32 text-white min-h-screen md:min-h-0"
-      style={{ 
-        backgroundImage: "url('/images/hero-background.jpg')",
+      style={{
+        backgroundImage: imageLoading 
+          ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+          : heroImageUrl 
+            ? `url('${heroImageUrl}')` 
+            : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         backgroundSize: "cover",
-        backgroundPosition: "center center"
+        backgroundPosition: "center center",
+        transition: 'background-image 0.5s ease-in-out'
       }}
     >
+      {imageLoading && (
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 animate-pulse"></div>
+      )}
       <div className="absolute inset-0 bg-black opacity-40 md:opacity-50"></div>
       <div className="container mx-auto px-4 relative z-10 h-full flex items-center">
         <div className="flex flex-col md:flex-row items-center w-full">

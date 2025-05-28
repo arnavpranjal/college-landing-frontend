@@ -8,9 +8,10 @@ import { Menu, X } from 'lucide-react';
 
 interface HeaderProps {
   onRegisterClick: () => void;
+  collegeName: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ onRegisterClick }) => {
+const Header: React.FC<HeaderProps> = ({ onRegisterClick, collegeName }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
@@ -29,7 +30,7 @@ const Header: React.FC<HeaderProps> = ({ onRegisterClick }) => {
   return (
     <header className="bg-white p-4 border-b border-gray-200 shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto flex justify-between items-center">
-        <Link href="/" className="text-lg md:text-2xl font-bold text-blue-600">
+        <Link href={`/lp/${collegeName}`} className="text-lg md:text-2xl font-bold text-blue-600">
           CollegeLogo
         </Link>
 
