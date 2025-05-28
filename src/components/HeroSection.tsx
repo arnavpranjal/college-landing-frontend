@@ -51,61 +51,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({ collegeName, onImageLoaded })
   const [heroImageUrl, setHeroImageUrl] = useState<string>('');
   const [imageLoading, setImageLoading] = useState(true);
 
-  // Function to check if an image exists with timeout
-  const checkImageExists = (url: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      const timeout = setTimeout(() => {
-        resolve(false);
-      }, 3000); // 3 second timeout
-      
-      img.onload = () => {
-        clearTimeout(timeout);
-        resolve(true);
-      };
-      img.onerror = () => {
-        clearTimeout(timeout);
-        resolve(false);
-      };
-      img.src = url;
-    });
-  };
-
-  // Find the available hero image format (parallel loading)
+  // Set the hero image URL directly
   useEffect(() => {
-    const findHeroImage = async () => {
-      setImageLoading(true);
-      const imageFormats = ['png','jpg', 'jpeg', 'webp'];
-      const basePath = `/${collegeName}/backgroundImage/hero`;
-      
-      // Check all formats in parallel
-      const promises = imageFormats.map(async (format) => {
-        const imageUrl = `${basePath}.${format}`;
-        const exists = await checkImageExists(imageUrl);
-        return exists ? imageUrl : null;
-      });
-      
-      try {
-        const results = await Promise.all(promises);
-        const foundImage = results.find(url => url !== null);
-        
-        if (foundImage) {
-          setHeroImageUrl(foundImage);
-        } else {
-          setHeroImageUrl('');
-        }
-      } catch (error) {
-        console.warn('Error loading hero image:', error);
-        setHeroImageUrl('');
-      } finally {
-        setImageLoading(false);
-        // Notify parent component that image loading is complete
-        onImageLoaded?.();
-      }
-    };
-
     if (collegeName) {
-      findHeroImage();
+      const heroImageUrl = `/${collegeName}/backgroundImage/hero.jpg`;
+      setHeroImageUrl(heroImageUrl);
+      setImageLoading(false);
+      // Notify parent component that image loading is complete
+      onImageLoaded?.();
     }
   }, [collegeName, onImageLoaded]);
 
