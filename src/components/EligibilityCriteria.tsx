@@ -25,6 +25,7 @@ interface EligibilityCriteriaProps {
 const EligibilityCriteria: React.FC<EligibilityCriteriaProps> = ({ onEnquireClick, collegeName }) => {
   const [eligibilityData, setEligibilityData] = useState<ProgramEligibility[]>([]);
   const [loading, setLoading] = useState(true);
+  //ok
 
   // Load eligibility data from MD files
   useEffect(() => {
