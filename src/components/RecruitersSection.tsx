@@ -26,7 +26,7 @@ const RecruitersSection: React.FC<RecruitersProps> = ({ collegeName }) => {
   // Function to check if an image exists
   const checkImageExists = (url: string): Promise<boolean> => {
     return new Promise((resolve) => {
-      const img = new (window as any).Image() as HTMLImageElement;
+      const img = document.createElement('img');
       const timeout = setTimeout(() => {
         resolve(false);
       }, 2000); // 2 second timeout

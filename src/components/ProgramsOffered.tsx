@@ -77,9 +77,9 @@ const ProgramsOffered: React.FC<ProgramsOfferedProps> = ({ onApplyClick, college
       
       let duration = '';
       let description = '';
-      let keyFeatures: string[] = [];
+      const keyFeatures: string[] = [];
       let popularPrograms = '';
-      let popularProgramsList: string[] = [];
+      const popularProgramsList: string[] = [];
       
       let currentSection = '';
       

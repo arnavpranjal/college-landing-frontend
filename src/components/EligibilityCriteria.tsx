@@ -23,29 +23,8 @@ interface EligibilityCriteriaProps {
 }
 
 const EligibilityCriteria: React.FC<EligibilityCriteriaProps> = ({ onEnquireClick, collegeName }) => {
-  const [collegeDisplayName, setCollegeDisplayName] = useState<string>('Our College');
   const [eligibilityData, setEligibilityData] = useState<ProgramEligibility[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Load college display name
-  useEffect(() => {
-    const loadCollegeName = async () => {
-      try {
-        const response = await fetch('/collegeNames.json');
-        if (response.ok) {
-          const collegeNames = await response.json();
-          setCollegeDisplayName(collegeNames[collegeName] || collegeNames.default || 'Our College');
-        }
-      } catch (error) {
-        console.warn('Error loading college names:', error);
-        setCollegeDisplayName('Our College');
-      }
-    };
-
-    if (collegeName) {
-      loadCollegeName();
-    }
-  }, [collegeName]);
 
   // Load eligibility data from MD files
   useEffect(() => {
@@ -93,7 +72,7 @@ const EligibilityCriteria: React.FC<EligibilityCriteriaProps> = ({ onEnquireClic
       const title = lines[0].trim() as 'Undergraduate (UG)' | 'Postgraduate (PG)';
       
       let generalIntro = '';
-      let criteria: CriteriaDetail[] = [];
+      const criteria: CriteriaDetail[] = [];
       let additionalNotes = '';
       
       let currentSection = '';

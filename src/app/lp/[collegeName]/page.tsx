@@ -7,7 +7,6 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import ProgramsOffered from '@/components/ProgramsOffered';
 import RecruitersSection from '@/components/RecruitersSection';
-import EligibilityCriteria from '@/components/EligibilityCriteria';
 import CampusLifeSection from '@/components/CampusLifeSection';
 import WhyChooseUsSection from '@/components/WhyChooseUsSection';
 import TestimonialsSection from '@/components/TestimonialsSection';
@@ -105,7 +104,6 @@ export default function HomePage() {
         <HeroSection collegeName={collegeName} onImageLoaded={handleImageLoaded} />
         <ProgramsOffered onApplyClick={handleOpenDialog} collegeName={collegeName} />
         <RecruitersSection collegeName={collegeName} />
-        {/* <EligibilityCriteria onEnquireClick={handleOpenDialog} collegeName={collegeName} /> */}
         <CampusLifeSection collegeName={collegeName} />
         <WhyChooseUsSection collegeName={collegeName} />
         <TestimonialsSection collegeName={collegeName} />

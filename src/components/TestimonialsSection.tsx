@@ -1,7 +1,7 @@
 // src/components/TestimonialsSection.tsx
 "use client"; // Needed for potential carousel later, or if using client-side libraries
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Quote, ChevronLeft, ChevronRight } from 'lucide-react'; // Icon for quote marks
 // For a carousel, you might use a library like Swiper or build a simpler one.
@@ -28,7 +28,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ collegeName }
   // Function to check if an image exists
   const checkImageExists = (url: string): Promise<boolean> => {
     return new Promise((resolve) => {
-      const img = new (window as any).Image() as HTMLImageElement;
+      const img = document.createElement('img');
       const timeout = setTimeout(() => {
         resolve(false);
       }, 2000); // 2 second timeout for avatars
@@ -62,8 +62,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ collegeName }
   };
 
   // Function to parse markdown testimonials
-  const parseTestimonials = async (markdownText: string, collegeName: string): Promise<Testimonial[]> => {
-    const testimonials: Testimonial[] = [];
+  const parseTestimonials = useCallback(async (markdownText: string, collegeName: string): Promise<Testimonial[]> => {
     const sections = markdownText.split('---').filter(section => section.trim());
     
     // Process each section and find avatars in parallel
@@ -104,7 +103,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ collegeName }
     
     const results = await Promise.all(testimonialPromises);
     return results.filter(testimonial => testimonial !== null) as Testimonial[];
-  };
+  }, []);
 
   // Load testimonials from MD file
   useEffect(() => {
@@ -150,7 +149,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ collegeName }
     if (collegeName) {
       loadTestimonials();
     }
-  }, [collegeName]);
+  }, [collegeName, parseTestimonials]);
 
   const scrollToSlide = (slideIndex: number) => {
     if (scrollContainerRef.current) {
