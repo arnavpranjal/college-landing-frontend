@@ -1,6 +1,6 @@
 // src/components/EligibilityCriteria.tsx
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckSquare, GraduationCap } from 'lucide-react'; // Using suitable icons
 import { Button } from "@/components/ui/button"; // For the CTA
 
@@ -17,40 +17,173 @@ interface ProgramEligibility {
   additionalNotes?: string;
 }
 
-// Sample eligibility data - replace with actual college criteria
-const eligibilityData: ProgramEligibility[] = [
-  {
-    level: 'Undergraduate (UG)',
-    icon: GraduationCap, // Or another relevant icon for UG
-    generalIntro: 'To be eligible for our undergraduate programmes, candidates generally need to meet the following:',
-    criteria: [
-      { id: 'ug1', text: 'Successfully completed Higher Secondary Education (10+2) or an equivalent examination from a recognized national or state board.' },
-      { id: 'ug2', text: 'Achieved a minimum aggregate score of 50% in the qualifying examination (specific B.Tech programs may require 60% in PCM).' },
-      { id: 'ug3', text: 'For B.Tech Programmes: Physics, Chemistry, and Mathematics (PCM) are mandatory subjects in 10+2.' },
-      { id: 'ug4', text: 'For other UG Programmes (BBA, B.Com, B.Des, BA): Relevant subject combinations may be preferred; check specific program details.' },
-      { id: 'ug5', text: 'Appeared for and obtained a valid score in the [College Name] Entrance Test (CNET-UG) or other specified national/state level entrance exams (e.g., JEE Main for certain B.Tech seats).' },
-    ],
-    additionalNotes: 'Age limits may apply as per university guidelines. Some programs may have specific subject prerequisites or additional selection rounds like interviews or portfolio reviews.'
-  },
-  {
-    level: 'Postgraduate (PG)',
-    icon: GraduationCap, // Or another relevant icon for PG
-    generalIntro: 'For admission to our postgraduate programmes, the general eligibility criteria include:',
-    criteria: [
-      { id: 'pg1', text: 'A Bachelor\'s degree in a relevant discipline from a recognized university with a minimum of 50% aggregate marks or equivalent CGPA.' },
-      { id: 'pg2', text: 'For MBA Programmes: A valid score in CAT/MAT/XAT/CMAT or [College Name] Entrance Test (CNET-PG).' },
-      { id: 'pg3', text: 'For M.Tech Programmes: A B.E./B.Tech degree in a relevant engineering discipline and often a valid GATE score or performance in CNET-PG (M.Tech).' },
-      { id: 'pg4', text: 'Some PG programs may require prior work experience; refer to specific program brochures for details.' },
-    ],
-    additionalNotes: 'Candidates in their final year of their Bachelor\'s degree may also apply, provided they can submit their final mark sheets by the stipulated deadline.'
-  }
-];
-
 interface EligibilityCriteriaProps {
   onEnquireClick: () => void;
+  collegeName: string;
 }
 
-const EligibilityCriteria: React.FC<EligibilityCriteriaProps> = ({ onEnquireClick }) => {
+const EligibilityCriteria: React.FC<EligibilityCriteriaProps> = ({ onEnquireClick, collegeName }) => {
+  const [collegeDisplayName, setCollegeDisplayName] = useState<string>('Our College');
+  const [eligibilityData, setEligibilityData] = useState<ProgramEligibility[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load college display name
+  useEffect(() => {
+    const loadCollegeName = async () => {
+      try {
+        const response = await fetch('/collegeNames.json');
+        if (response.ok) {
+          const collegeNames = await response.json();
+          setCollegeDisplayName(collegeNames[collegeName] || collegeNames.default || 'Our College');
+        }
+      } catch (error) {
+        console.warn('Error loading college names:', error);
+        setCollegeDisplayName('Our College');
+      }
+    };
+
+    if (collegeName) {
+      loadCollegeName();
+    }
+  }, [collegeName]);
+
+  // Load eligibility data from MD files
+  useEffect(() => {
+    const loadEligibilityData = async () => {
+      try {
+        setLoading(true);
+        
+        // Try to load college-specific eligibility data
+        let eligibilityUrl = `/${collegeName}/eligibility.md`;
+        let response = await fetch(eligibilityUrl);
+        
+        // If college-specific file doesn't exist, fall back to default
+        if (!response.ok) {
+          eligibilityUrl = '/default/eligibility.md';
+          response = await fetch(eligibilityUrl);
+        }
+        
+        if (response.ok) {
+          const markdownText = await response.text();
+          const parsedEligibility = parseMarkdownToEligibility(markdownText);
+          setEligibilityData(parsedEligibility);
+        } else {
+          // Fallback to default data if no files found
+          setEligibilityData(getDefaultEligibilityData());
+        }
+      } catch (error) {
+        console.warn('Error loading eligibility data:', error);
+        setEligibilityData(getDefaultEligibilityData());
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (collegeName) {
+      loadEligibilityData();
+    }
+  }, [collegeName]);
+
+  const parseMarkdownToEligibility = (markdown: string): ProgramEligibility[] => {
+    const sections = markdown.split('## ').slice(1); // Remove the first empty element
+    const eligibility: ProgramEligibility[] = [];
+
+    sections.forEach((section) => {
+      const lines = section.trim().split('\n');
+      const title = lines[0].trim() as 'Undergraduate (UG)' | 'Postgraduate (PG)';
+      
+      let generalIntro = '';
+      let criteria: CriteriaDetail[] = [];
+      let additionalNotes = '';
+      
+      let currentSection = '';
+      
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (line.startsWith('**General Introduction:**')) {
+          generalIntro = line.replace('**General Introduction:**', '').trim();
+        } else if (line.startsWith('**Criteria:**')) {
+          currentSection = 'criteria';
+        } else if (line.startsWith('**Additional Notes:**')) {
+          currentSection = 'notes';
+          additionalNotes = line.replace('**Additional Notes:**', '').trim();
+        } else if (line.startsWith('- ') && currentSection === 'criteria') {
+          criteria.push({
+            id: `criteria-${criteria.length + 1}`,
+            text: line.substring(2)
+          });
+        } else if (currentSection === 'notes' && line && !line.startsWith('**') && !line.startsWith('---')) {
+          additionalNotes += (additionalNotes ? ' ' : '') + line;
+        } else if (!line.startsWith('**') && !line.startsWith('---') && !line.startsWith('- ') && line.length > 0 && !generalIntro && currentSection !== 'criteria') {
+          generalIntro += (generalIntro ? ' ' : '') + line;
+        }
+      }
+
+      eligibility.push({
+        level: title,
+        icon: GraduationCap,
+        generalIntro,
+        criteria,
+        additionalNotes
+      });
+    });
+
+    return eligibility;
+  };
+
+  const getDefaultEligibilityData = (): ProgramEligibility[] => {
+    return [
+      {
+        level: 'Undergraduate (UG)',
+        icon: GraduationCap,
+        generalIntro: 'To be eligible for our undergraduate programmes, candidates generally need to meet the following requirements:',
+        criteria: [
+          { id: 'ug1', text: 'Successfully completed Higher Secondary Education (10+2) or equivalent examination from a recognized board' },
+          { id: 'ug2', text: 'Achieved minimum aggregate score of 50% in the qualifying examination' },
+          { id: 'ug3', text: 'Relevant subject combinations as per program requirements' },
+          { id: 'ug4', text: 'Valid scores in national/state level entrance examinations or institutional entrance tests' },
+          { id: 'ug5', text: 'Age limits as per university/regulatory guidelines' },
+        ],
+        additionalNotes: 'Age limits may apply as per university guidelines. Some programs may have specific subject prerequisites or additional selection rounds like interviews or portfolio reviews.'
+      },
+      {
+        level: 'Postgraduate (PG)',
+        icon: GraduationCap,
+        generalIntro: 'For admission to our postgraduate programmes, the general eligibility criteria include:',
+        criteria: [
+          { id: 'pg1', text: 'Bachelor\'s degree in relevant discipline from a recognized university with minimum 50% aggregate marks' },
+          { id: 'pg2', text: 'Valid scores in national level entrance tests (CAT/MAT/XAT/GATE) or institutional entrance tests' },
+          { id: 'pg3', text: 'Meeting program-specific requirements and prerequisites' },
+          { id: 'pg4', text: 'Some programs may require relevant work experience' },
+        ],
+        additionalNotes: 'Candidates in their final year of Bachelor\'s degree may apply provisionally. Final admission subject to meeting eligibility criteria and successful completion of qualifying degree.'
+      }
+    ];
+  };
+
+  if (loading) {
+    return (
+      <section id="eligibility" className="py-16 md:py-24 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-300 rounded w-64 mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-300 rounded w-96 mx-auto"></div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            {[1, 2].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-300 rounded-xl h-96"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="eligibility" className="py-16 md:py-24 bg-slate-50">
       <div className="container mx-auto px-4">

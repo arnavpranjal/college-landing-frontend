@@ -1,7 +1,7 @@
 // src/components/RecruitersSection.tsx
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 
 interface Recruiter {
@@ -10,23 +10,111 @@ interface Recruiter {
   logoUrl: string;
 }
 
-const recruitersData: Recruiter[] = [
-  { id: 'r1', name: 'Tech Solutions Inc.', logoUrl: '/images/recruiters/logo1.svg' },
-  { id: 'r2', name: 'Innovate Corp', logoUrl: '/images/recruiters/logo2.png' },
-  { id: 'r3', name: 'Global Ventures', logoUrl: '/images/recruiters/logo3.svg' },
-  { id: 'r4', name: 'Future Systems', logoUrl: '/images/recruiters/logo4.png' },
-  { id: 'r5', name: 'Eco World', logoUrl: '/images/recruiters/logo5.png' },
-  { id: 'r6', name: 'Data Insights', logoUrl: '/images/recruiters/logo6.png' },
-  { id: 'r7', name: 'Alpha Group', logoUrl: '/images/recruiters/logo1.svg' },
-  { id: 'r8', name: 'Beta Corporation', logoUrl: '/images/recruiters/logo2.png' },
-];
+interface RecruitersProps {
+  collegeName: string;
+}
 
-const RecruitersSection = () => {
+const RecruitersSection: React.FC<RecruitersProps> = ({ collegeName }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [currentDot, setCurrentDot] = useState(0);
+  const [recruitersData, setRecruitersData] = useState<Recruiter[]>([]);
+  const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   const itemsPerView = 3; // Number of items visible at once on mobile
+
+  // Function to check if an image exists
+  const checkImageExists = (url: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new (window as any).Image() as HTMLImageElement;
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, 2000); // 2 second timeout
+      
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+      img.onerror = () => {
+        clearTimeout(timeout);
+        resolve(false);
+      };
+      img.src = url;
+    });
+  };
+
+  // Load recruiters dynamically
+  useEffect(() => {
+    const loadRecruiters = async () => {
+      try {
+        setLoading(true);
+        const recruiters: Recruiter[] = [];
+        
+        // Try to load recruiter images from recruiter1.svg to recruiter20.svg (or until we find none)
+        for (let i = 1; i <= 20; i++) {
+          const logoUrl = `/${collegeName}/recruiters/recruiter${i}.svg`;
+          const exists = await checkImageExists(logoUrl);
+          
+          if (exists) {
+            recruiters.push({
+              id: `r${i}`,
+              name: `Recruiter ${i}`, // You can customize this or load from a separate config
+              logoUrl
+            });
+          } else {
+            // If we don't find recruiter{i}.svg, try recruiter{i}.png as fallback
+            const pngLogoUrl = `/${collegeName}/recruiters/recruiter${i}.png`;
+            const pngExists = await checkImageExists(pngLogoUrl);
+            
+            if (pngExists) {
+              recruiters.push({
+                id: `r${i}`,
+                name: `Recruiter ${i}`,
+                logoUrl: pngLogoUrl
+              });
+            }
+          }
+          
+          // If we haven't found any recruiters in the last 3 attempts, stop looking
+          if (i > 3 && recruiters.length === 0) {
+            break;
+          }
+          
+          // If we found some recruiters but haven't found any in the last 3, stop looking
+          if (i > recruiters.length + 3 && recruiters.length > 0) {
+            break;
+          }
+        }
+        
+        if (recruiters.length === 0) {
+          // Fallback recruiters if no images found
+          setRecruitersData([
+            { id: 'r1', name: 'Tech Solutions Inc.', logoUrl: '' },
+            { id: 'r2', name: 'Innovate Corp', logoUrl: '' },
+            { id: 'r3', name: 'Global Ventures', logoUrl: '' },
+            { id: 'r4', name: 'Future Systems', logoUrl: '' },
+          ]);
+        } else {
+          setRecruitersData(recruiters);
+        }
+        
+      } catch (error) {
+        console.error('Error loading recruiters:', error);
+        // Fallback recruiters on error
+        setRecruitersData([
+          { id: 'r1', name: 'Tech Solutions Inc.', logoUrl: '' },
+          { id: 'r2', name: 'Innovate Corp', logoUrl: '' },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (collegeName) {
+      loadRecruiters();
+    }
+  }, [collegeName]);
+
   const totalDots = Math.ceil(recruitersData.length / itemsPerView);
 
   // Create multiple copies for seamless infinite scroll
@@ -61,6 +149,28 @@ const RecruitersSection = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <section id="recruiters" className="py-16 md:py-24 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-xl sm:text-2xl md:text-4xl font-bold text-gray-800 mb-4">
+              Our Valued Recruiters
+            </h2>
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-96 mx-auto"></div>
+            </div>
+          </div>
+          <div className="flex justify-center">
+            <div className="animate-pulse">
+              <div className="h-20 bg-gray-200 rounded w-full max-w-4xl"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <>
       <section id="recruiters" className="py-16 md:py-24 bg-white">
@@ -94,25 +204,31 @@ const RecruitersSection = () => {
                     style={{ width: '200px' }}
                   >
                     <div className="relative w-32 h-16 flex items-center justify-center">
-                      <Image
-                        src={recruiter.logoUrl}
-                        alt={`${recruiter.name} logo`}
-                        fill
-                        className="object-contain"
-                        sizes="128px"
-                        onError={(e) => {
-                          // Fallback: create a text-based logo
-                          const target = e.target as HTMLImageElement;
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.innerHTML = `
-                              <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white font-bold text-sm">
-                                ${recruiter.name.split(' ').map(word => word[0]).join('')}
-                              </div>
-                            `;
-                          }
-                        }}
-                      />
+                      {recruiter.logoUrl ? (
+                        <Image
+                          src={recruiter.logoUrl}
+                          alt={`${recruiter.name} logo`}
+                          fill
+                          className="object-contain"
+                          sizes="128px"
+                          onError={(e) => {
+                            // Fallback: create a text-based logo
+                            const target = e.target as HTMLImageElement;
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = `
+                                <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white font-bold text-sm">
+                                  ${recruiter.name.split(' ').map(word => word[0]).join('')}
+                                </div>
+                              `;
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white font-bold text-sm">
+                          {recruiter.name.split(' ').map(word => word[0]).join('')}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -138,54 +254,31 @@ const RecruitersSection = () => {
                   className="flex-shrink-0 snap-start w-32 h-20 flex items-center justify-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200"
                 >
                   <div className="relative w-24 h-12 flex items-center justify-center">
-                    <Image
-                      src={recruiter.logoUrl}
-                      alt={`${recruiter.name} logo`}
-                      fill
-                      className="object-contain"
-                      sizes="96px"
-                      onError={(e) => {
-                        // Fallback for mobile
-                        const target = e.target as HTMLImageElement;
-                        const parent = target.parentElement;
-                        if (parent) {
-                          parent.innerHTML = `
-                            <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white font-bold text-xs">
-                              ${recruiter.name.split(' ').map(word => word[0]).join('')}
-                            </div>
-                          `;
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-              {/* Add a few more items to show there's more content */}
-              {recruitersData.slice(0, 3).map((recruiter, index) => (
-                <div
-                  key={`extra-${recruiter.id}-${index}`}
-                  className="flex-shrink-0 snap-start w-32 h-20 flex items-center justify-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200"
-                >
-                  <div className="relative w-24 h-12 flex items-center justify-center">
-                    <Image
-                      src={recruiter.logoUrl}
-                      alt={`${recruiter.name} logo`}
-                      fill
-                      className="object-contain"
-                      sizes="96px"
-                      onError={(e) => {
-                        // Fallback for mobile
-                        const target = e.target as HTMLImageElement;
-                        const parent = target.parentElement;
-                        if (parent) {
-                          parent.innerHTML = `
-                            <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white font-bold text-xs">
-                              ${recruiter.name.split(' ').map(word => word[0]).join('')}
-                            </div>
-                          `;
-                        }
-                      }}
-                    />
+                    {recruiter.logoUrl ? (
+                      <Image
+                        src={recruiter.logoUrl}
+                        alt={`${recruiter.name} logo`}
+                        fill
+                        className="object-contain"
+                        sizes="96px"
+                        onError={(e) => {
+                          // Fallback for mobile
+                          const target = e.target as HTMLImageElement;
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = `
+                              <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white font-bold text-xs">
+                                ${recruiter.name.split(' ').map(word => word[0]).join('')}
+                              </div>
+                            `;
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white font-bold text-xs">
+                        {recruiter.name.split(' ').map(word => word[0]).join('')}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

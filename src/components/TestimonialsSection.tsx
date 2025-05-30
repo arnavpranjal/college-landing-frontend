@@ -1,7 +1,7 @@
 // src/components/TestimonialsSection.tsx
 "use client"; // Needed for potential carousel later, or if using client-side libraries
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Quote, ChevronLeft, ChevronRight } from 'lucide-react'; // Icon for quote marks
 // For a carousel, you might use a library like Swiper or build a simpler one.
@@ -15,34 +15,142 @@ interface Testimonial {
   avatarUrl?: string; // Optional student photo
 }
 
-// Sample testimonial data - replace with actual testimonials
-const testimonialsData: Testimonial[] = [
-  {
-    id: 't1',
-    name: 'Priya Sharma',
-    program: 'B.Tech Computer Science, Class of 2023',
-    quote: "The faculty here is incredibly supportive, and the hands-on projects gave me the confidence to excel in my career. The placement support was fantastic!",
-    avatarUrl: '/images/avatars/avatar1.png',
-  },
-  {
-    id: 't2',
-    name: 'Rahul Verma',
-    program: 'MBA, Class of 2022',
-    quote: "My time at [College Name] was transformative. The industry exposure and leadership training prepared me for the corporate world. The campus life is also vibrant.",
-    avatarUrl: '/images/avatars/avatar2.png',
-  },
-  {
-    id: 't3',
-    name: 'Aisha Khan',
-    program: 'B.Des Graphic Design, Class of 2024',
-    quote: "The creative freedom and mentorship I received were invaluable. The collaborative studio environment and access to resources helped me build a strong portfolio.",
-    avatarUrl: '/images/avatars/avatar3.png', // Example with no avatar provided
-  },
-];
+interface TestimonialsSectionProps {
+  collegeName: string;
+}
 
-const TestimonialsSection = () => {
+const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ collegeName }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [testimonialsData, setTestimonialsData] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Function to check if an image exists
+  const checkImageExists = (url: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new (window as any).Image() as HTMLImageElement;
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, 2000); // 2 second timeout for avatars
+      
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+      img.onerror = () => {
+        clearTimeout(timeout);
+        resolve(false);
+      };
+      img.src = url;
+    });
+  };
+
+  // Function to find available avatar format
+  const findAvatarUrl = async (collegeName: string, avatarNumber: number): Promise<string | undefined> => {
+    const formats = ['png'];
+    const basePath = `/${collegeName}/avatars/avatar${avatarNumber}`;
+    
+    for (const format of formats) {
+      const avatarUrl = `${basePath}.${format}`;
+      const exists = await checkImageExists(avatarUrl);
+      if (exists) {
+        return avatarUrl;
+      }
+    }
+    
+    return undefined; // No avatar found
+  };
+
+  // Function to parse markdown testimonials
+  const parseTestimonials = async (markdownText: string, collegeName: string): Promise<Testimonial[]> => {
+    const testimonials: Testimonial[] = [];
+    const sections = markdownText.split('---').filter(section => section.trim());
+    
+    // Process each section and find avatars in parallel
+    const testimonialPromises = sections.map(async (section, index) => {
+      const lines = section.trim().split('\n').filter(line => line.trim());
+      
+      let name = '';
+      let program = '';
+      let quote = '';
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (line.startsWith('## ')) {
+          name = line.replace('## ', '');
+        } else if (line.startsWith('**Program:**')) {
+          program = line.replace('**Program:**', '').trim();
+        } else if (line && !line.startsWith('#') && !line.startsWith('**')) {
+          quote += (quote ? ' ' : '') + line;
+        }
+      }
+      
+      if (name && program && quote) {
+        // Find available avatar format (jpg or jpeg)
+        const avatarUrl = await findAvatarUrl(collegeName, index + 1);
+        
+        return {
+          id: `t${index + 1}`,
+          name,
+          program,
+          quote,
+          avatarUrl
+        };
+      }
+      
+      return null;
+    });
+    
+    const results = await Promise.all(testimonialPromises);
+    return results.filter(testimonial => testimonial !== null) as Testimonial[];
+  };
+
+  // Load testimonials from MD file
+  useEffect(() => {
+    const loadTestimonials = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/${collegeName}/testimonials.md`);
+        
+        if (response.ok) {
+          const markdownText = await response.text();
+          const parsedTestimonials = await parseTestimonials(markdownText, collegeName);
+          setTestimonialsData(parsedTestimonials);
+        } else {
+          console.warn('Testimonials file not found, using fallback data');
+          // Fallback testimonials if file doesn't exist
+          setTestimonialsData([
+            {
+              id: 't1',
+              name: 'Student Name',
+              program: 'Program Name, Class of 2024',
+              quote: "This college has provided me with excellent education and opportunities for growth.",
+              avatarUrl: `/${collegeName}/avatars/avatar1.png`
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error loading testimonials:', error);
+        // Fallback testimonials on error
+        setTestimonialsData([
+          {
+            id: 't1',
+            name: 'Student Name',
+            program: 'Program Name, Class of 2024',
+            quote: "This college has provided me with excellent education and opportunities for growth.",
+            avatarUrl: `/${collegeName}/avatars/avatar1.jpeg`
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (collegeName) {
+      loadTestimonials();
+    }
+  }, [collegeName]);
 
   const scrollToSlide = (slideIndex: number) => {
     if (scrollContainerRef.current) {
@@ -78,6 +186,21 @@ const TestimonialsSection = () => {
     scrollToSlide(prevIndex);
   };
 
+  if (loading) {
+    return (
+      <section id="testimonials" className="py-16 md:py-24 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-96 mx-auto"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="testimonials" className="py-16 md:py-24 bg-white">
       <div className="container mx-auto px-4">
@@ -86,7 +209,7 @@ const TestimonialsSection = () => {
             Words From Our Students
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
-            Hear directly from our students and alumni about their experiences and achievements at [College Name].
+            Hear directly from our students and alumni about their experiences and achievements.
           </p>
         </div>
 
@@ -105,14 +228,15 @@ const TestimonialsSection = () => {
 
               <div className="mt-auto pt-4 border-t border-slate-200 w-full">
                 {testimonial.avatarUrl ? (
-                  <Image
-                    src={testimonial.avatarUrl}
-                    alt={testimonial.name}
-                    width={64}
-                    height={64}
-                    className="rounded-full mx-auto mb-3 border-2 border-blue-200"
-                    style={{ objectFit: 'cover' }}
-                  />
+                  <div className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-blue-200 overflow-hidden bg-gray-100">
+                    <Image
+                      src={testimonial.avatarUrl}
+                      alt={testimonial.name}
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white text-xl sm:text-2xl font-semibold mx-auto mb-3">
                     {testimonial.name.charAt(0)} 
@@ -167,16 +291,17 @@ const TestimonialsSection = () => {
 
                 <div className="mt-auto pt-4 border-t border-slate-200 w-full">
                   {testimonial.avatarUrl ? (
-                    <Image
-                      src={testimonial.avatarUrl}
-                      alt={testimonial.name}
-                      width={56}
-                      height={56}
-                      className="rounded-full mx-auto mb-3 border-2 border-blue-200"
-                      style={{ objectFit: 'cover' }}
-                    />
+                    <div className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-blue-200 overflow-hidden bg-gray-100">
+                      <Image
+                        src={testimonial.avatarUrl}
+                        alt={testimonial.name}
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   ) : (
-                    <div className="w-14 h-14 rounded-full bg-blue-500 flex items-center justify-center text-white text-xl font-semibold mx-auto mb-3">
+                    <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white text-xl sm:text-2xl font-semibold mx-auto mb-3">
                       {testimonial.name.charAt(0)} 
                     </div>
                   )}

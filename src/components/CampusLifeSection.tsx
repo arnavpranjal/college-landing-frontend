@@ -11,39 +11,43 @@ interface CampusFeature {
   icon: React.ElementType;
 }
 
-// Sample data for campus life features - replace with actual content
-const campusFeaturesData: CampusFeature[] = [
-  {
-    id: 'cl1',
-    title: 'State-of-the-Art Library',
-    description: 'Access a vast collection of books, journals, and digital resources in a modern, quiet study environment.',
-    imageUrl: '/images/campus-life/library.jpg',
-    icon: BookOpen,
-  },
-  {
-    id: 'cl2',
-    title: 'Vibrant Sports Culture',
-    description: 'Engage in various sports with excellent facilities for cricket, football, basketball, and indoor games.',
-    imageUrl: '/images/campus-life/sports.jpg',
-    icon: Zap, // Using Zap for energy/sports
-  },
-  {
-    id: 'cl3',
-    title: 'Comfortable Hostel Life',
-    description: 'Well-maintained and secure hostels with all necessary amenities, creating a home away from home.',
-    imageUrl: '/images/campus-life/hostel.jpg',
-    icon: Home,
-  },
-  {
-    id: 'cl4',
-    title: 'Student Clubs & Events',
-    description: 'Join diverse student-run clubs (tech, cultural, social) and participate in year-round exciting events and fests.',
-    imageUrl: '/images/campus-life/event.jpg',
-    icon: Users,
-  },
-];
+interface CampusLifeSectionProps {
+  collegeName: string;
+}
 
-const CampusLifeSection = () => {
+const CampusLifeSection: React.FC<CampusLifeSectionProps> = ({ collegeName }) => {
+  // Dynamic campus features data based on college name
+  const campusFeaturesData: CampusFeature[] = [
+    {
+      id: 'cl1',
+      title: 'State-of-the-Art Library',
+      description: 'Access a vast collection of books, journals, and digital resources in a modern, quiet study environment.',
+      imageUrl: `/${collegeName}/campuslife/library.png`,
+      icon: BookOpen,
+    },
+    {
+      id: 'cl2',
+      title: 'Vibrant Sports Culture',
+      description: 'Engage in various sports with excellent facilities for cricket, football, basketball, and indoor games.',
+      imageUrl: `/${collegeName}/campuslife/sports.png`,
+      icon: Zap, // Using Zap for energy/sports
+    },
+    {
+      id: 'cl3',
+      title: 'Comfortable Hostel Life',
+      description: 'Well-maintained and secure hostels with all necessary amenities, creating a home away from home.',
+      imageUrl: `/${collegeName}/campuslife/hostel.png`,
+      icon: Home,
+    },
+    {
+      id: 'cl4',
+      title: 'Student Clubs & Events',
+      description: 'Join diverse student-run clubs (tech, cultural, social) and participate in year-round exciting events and fests.',
+      imageUrl: `/${collegeName}/campuslife/extra.png`,
+      icon: Users,
+    },
+  ];
+
   return (
     <section id="campus-life" className="py-16 md:py-24 bg-white">
       <div className="container mx-auto px-4">

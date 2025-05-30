@@ -1,5 +1,7 @@
 // src/components/WhyChooseUsSection.tsx
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import { Award, Users, Lightbulb, BookOpenText, TrendingUp, ShieldCheck } from 'lucide-react'; // Example icons
 
 interface USP {
@@ -7,6 +9,10 @@ interface USP {
   title: string;
   description: string;
   icon: React.ElementType;
+}
+
+interface WhyChooseUsSectionProps {
+  collegeName: string;
 }
 
 // Sample Unique Selling Propositions - replace with actual college USPs
@@ -49,13 +55,35 @@ const uspData: USP[] = [
   },
 ];
 
-const WhyChooseUsSection = () => {
+const WhyChooseUsSection: React.FC<WhyChooseUsSectionProps> = ({ collegeName }) => {
+  const [collegeDisplayName, setCollegeDisplayName] = useState<string>('Our College');
+
+  // Load college display name
+  useEffect(() => {
+    const loadCollegeName = async () => {
+      try {
+        const response = await fetch('/collegeNames.json');
+        if (response.ok) {
+          const collegeNames = await response.json();
+          setCollegeDisplayName(collegeNames[collegeName] || collegeNames.default || 'Our College');
+        }
+      } catch (error) {
+        console.warn('Error loading college names:', error);
+        setCollegeDisplayName('Our College');
+      }
+    };
+
+    if (collegeName) {
+      loadCollegeName();
+    }
+  }, [collegeName]);
+
   return (
     <section id="why-choose-us" className="py-16 md:py-24 bg-slate-100"> {/* Light background for contrast */}
       <div className="container mx-auto px-4">
         <div className="text-center mb-12 md:mb-16">
           <h2 className="text-xl sm:text-2xl md:text-4xl font-bold text-gray-800 mb-4">
-            Why Choose [College Name]?
+            Why Choose {collegeDisplayName}?
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
             Discover the distinct advantages that make our institution the ideal choice for your higher education journey.
