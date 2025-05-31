@@ -26,7 +26,7 @@ const EligibilityCriteria: React.FC<EligibilityCriteriaProps> = ({ onEnquireClic
   const [eligibilityData, setEligibilityData] = useState<ProgramEligibility[]>([]);
   const [loading, setLoading] = useState(true);
   //ok
-
+ //ok
   // Load eligibility data from MD files
   useEffect(() => {
     const loadEligibilityData = async () => {
