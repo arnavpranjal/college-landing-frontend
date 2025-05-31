@@ -104,6 +104,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ collegeName, onImageLoaded })
 
     try {
       // Replace with your actual API URL and port for the backend
+      console.log(submissionData)
+      
       const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
       const response = await fetch(`${apiUrl}/leads/register`, {
         method: 'POST',
@@ -114,7 +116,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ collegeName, onImageLoaded })
       });
 
       const result = await response.json();
-
+  //
       if (!response.ok) {
         const errorMessage = result.message || `Server responded with ${response.status}`;
         console.error("Submission failed:", errorMessage, result);
