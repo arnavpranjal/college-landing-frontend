@@ -79,7 +79,7 @@ const RecruitersSection: React.FC<RecruitersProps> = ({ collegeName }) => {
           if (i > 3 && recruiters.length === 0) {
             break;
           }
-          
+          //a
           // If we found some recruiters but haven't found any in the last 3, stop looking
           if (i > recruiters.length + 3 && recruiters.length > 0) {
             break;
