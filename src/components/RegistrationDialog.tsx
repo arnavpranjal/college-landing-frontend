@@ -86,7 +86,7 @@ const RegistrationDialog: React.FC<RegistrationDialogProps> = ({
 
     try {
       // Replace with your actual API URL and port for the backend
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://college-landing-backend.vercel.app';
       const response = await fetch(`${apiUrl}/leads/register`, {
         method: 'POST',
         headers: {
