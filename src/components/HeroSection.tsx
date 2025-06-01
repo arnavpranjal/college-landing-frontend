@@ -100,6 +100,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ collegeName, onImageLoaded })
     const submissionData = {
       ...values,
       mobilePhone: `+91${values.mobilePhone}`,
+      collegeName: collegeDisplayName,
     };
 
     try {
