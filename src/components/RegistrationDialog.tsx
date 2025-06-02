@@ -46,17 +46,20 @@ const formSchema = z.object({
 interface RegistrationDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  collegeName?: string;
   // title?: string; // Commented out as it's unused
   // description?: string; // Commented out as it's unused
 }
 
 const RegistrationDialog: React.FC<RegistrationDialogProps> = ({ 
   isOpen, 
-  onClose, 
+  onClose,
+  collegeName = '',
   // title = "Register Your Interest", // Commented out as it's unused
   // description = "Fill out the form below and we'll get back to you with more information about our programs." // Commented out as it's unused
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [collegeDisplayName, setCollegeDisplayName] = useState<string>('Our College');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,6 +69,26 @@ const RegistrationDialog: React.FC<RegistrationDialogProps> = ({
       mobilePhone: "", 
     },
   });
+
+  // Load college display name (same as HeroSection)
+  useEffect(() => {
+    const loadCollegeName = async () => {
+      try {
+        const response = await fetch('/collegeNames.json');
+        if (response.ok) {
+          const collegeNames = await response.json();
+          setCollegeDisplayName(collegeNames[collegeName] || collegeNames.default || 'Our College');
+        }
+      } catch (error) {
+        console.warn('Error loading college names:', error);
+        setCollegeDisplayName('Our College');
+      }
+    };
+
+    if (collegeName) {
+      loadCollegeName();
+    }
+  }, [collegeName]);
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -82,10 +105,13 @@ const RegistrationDialog: React.FC<RegistrationDialogProps> = ({
     const submissionData = {
       ...values,
       mobilePhone: `+91${values.mobilePhone}`,
+      collegeName: collegeDisplayName, // Include college name like HeroSection
     };
 
     try {
       // Replace with your actual API URL and port for the backend
+      console.log(submissionData); // Log submission data like HeroSection
+      
       const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://college-landing-backend.vercel.app';
       const response = await fetch(`${apiUrl}/leads/register`, {
         method: 'POST',

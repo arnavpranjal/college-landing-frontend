@@ -1,8 +1,8 @@
 // src/app/lp/[collegeName]/page.tsx
 "use client";
 
-import React, { useState } from 'react';
-import { useParams } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import ProgramsOffered from '@/components/ProgramsOffered';
@@ -70,15 +70,58 @@ const PageLoader = () => (
   </div>
 );
 
+// Simple redirect loading component
+const RedirectLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p className="text-gray-600">Redirecting...</p>
+    </div>
+  </div>
+);
+
 export default function HomePage() {
   const params = useParams();
+  const router = useRouter();
   const collegeName = params.collegeName as string;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
+  const [isValidCollege, setIsValidCollege] = useState<boolean | null>(null);
 
-  // You can now use collegeName to fetch college-specific data or customize content
-  // For example: console.log("Current College:", collegeName);
+  // Validate college name against collegeNames.json
+  useEffect(() => {
+    const validateCollege = async () => {
+      try {
+        const response = await fetch('/collegeNames.json');
+        if (!response.ok) {
+          console.error('Failed to fetch collegeNames.json');
+          router.replace('/');
+          return;
+        }
+        
+        const collegeNames = await response.json();
+        
+        // Check if the college name exists in the JSON file
+        if (collegeNames[collegeName]) {
+          setIsValidCollege(true);
+        } else {
+          console.warn(`College name "${collegeName}" not found in collegeNames.json`);
+          router.replace('/');
+          return;
+        }
+      } catch (error) {
+        console.error('Error validating college name:', error);
+        router.replace('/');
+      }
+    };
+
+    if (collegeName) {
+      validateCollege();
+    } else {
+      router.replace('/');
+    }
+  }, [collegeName, router]);
 
   const handleOpenDialog = () => {
     setIsDialogOpen(true);
@@ -94,6 +137,16 @@ export default function HomePage() {
       setPageLoading(false);
     }, 500);
   };
+
+  // Show redirect loader while validating college name
+  if (isValidCollege === null) {
+    return <RedirectLoader />;
+  }
+
+  // If college is not valid, show redirect loader (useEffect will handle redirect)
+  if (isValidCollege === false) {
+    return <RedirectLoader />;
+  }
 
   return (
     <>
@@ -112,6 +165,7 @@ export default function HomePage() {
         <RegistrationDialog 
           isOpen={isDialogOpen} 
           onClose={handleCloseDialog}
+          collegeName={collegeName}
         />
         
         <Footer />

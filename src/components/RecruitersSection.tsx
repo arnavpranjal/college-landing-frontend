@@ -23,79 +23,65 @@ const RecruitersSection: React.FC<RecruitersProps> = ({ collegeName }) => {
   
   const itemsPerView = 3; // Number of items visible at once on mobile
 
-  // Function to check if an image exists
-  const checkImageExists = (url: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const img = document.createElement('img');
-      const timeout = setTimeout(() => {
-        resolve(false);
-      }, 2000); // 2 second timeout
+  // Function to read recruiter count from recruiters.md file
+  const getRecruiterCount = async (collegeName: string): Promise<number> => {
+    try {
+      const response = await fetch(`/${collegeName}/recruiters.md`);
+      if (!response.ok) {
+        console.warn(`recruiters.md not found for college: ${collegeName}`);
+        return 0;
+      }
       
-      img.onload = () => {
-        clearTimeout(timeout);
-        resolve(true);
-      };
-      img.onerror = () => {
-        clearTimeout(timeout);
-        resolve(false);
-      };
-      img.src = url;
-    });
+      const content = await response.text();
+      
+      // Parse the markdown content to extract the count
+      // Look for pattern: **Total Recruiter Images Available:** 11
+      const countMatch = content.match(/\*\*Total Recruiter Images Available:\*\*\s*(\d+)/);
+      
+      if (countMatch && countMatch[1]) {
+        const count = parseInt(countMatch[1], 10);
+        console.log(`Found ${count} recruiter images for ${collegeName}`);
+        return count;
+      }
+      
+      console.warn(`Could not parse recruiter count from recruiters.md for ${collegeName}`);
+      return 0;
+    } catch (error) {
+      console.error(`Error reading recruiters.md for ${collegeName}:`, error);
+      return 0;
+    }
   };
 
-  // Load recruiters dynamically
+  // Load recruiters based on count from md file
   useEffect(() => {
     const loadRecruiters = async () => {
       try {
         setLoading(true);
         const recruiters: Recruiter[] = [];
         
-        // Try to load recruiter images from recruiter1.svg to recruiter20.svg (or until we find none)
-        for (let i = 1; i <= 20; i++) {
-          const logoUrl = `/${collegeName}/recruiters/recruiter${i}.svg`;
-          const exists = await checkImageExists(logoUrl);
-          
-          if (exists) {
+        // Get the count from the recruiters.md file
+        const recruiterCount = await getRecruiterCount(collegeName);
+        
+        if (recruiterCount > 0) {
+          // Load the exact number of images specified in the md file
+          for (let i = 1; i <= recruiterCount; i++) {
+            const logoUrl = `/${collegeName}/recruiters/recruiter${i}.svg`;
             recruiters.push({
               id: `r${i}`,
               name: `Recruiter ${i}`, // You can customize this or load from a separate config
               logoUrl
             });
-          } else {
-            // If we don't find recruiter{i}.svg, try recruiter{i}.png as fallback
-            const pngLogoUrl = `/${collegeName}/recruiters/recruiter${i}.png`;
-            const pngExists = await checkImageExists(pngLogoUrl);
-            
-            if (pngExists) {
-              recruiters.push({
-                id: `r${i}`,
-                name: `Recruiter ${i}`,
-                logoUrl: pngLogoUrl
-              });
-            }
           }
-          
-          // If we haven't found any recruiters in the last 3 attempts, stop looking
-          if (i > 3 && recruiters.length === 0) {
-            break;
-          }
-          //a
-          // If we found some recruiters but haven't found any in the last 3, stop looking
-          if (i > recruiters.length + 3 && recruiters.length > 0) {
-            break;
-          }
-        }
-        
-        if (recruiters.length === 0) {
-          // Fallback recruiters if no images found
+          setRecruitersData(recruiters);
+        } else {
+          // Fallback recruiters if no md file found or count is 0
+          console.warn(`No recruiter configuration found for college: ${collegeName}`);
           setRecruitersData([
             { id: 'r1', name: 'Tech Solutions Inc.', logoUrl: '' },
             { id: 'r2', name: 'Innovate Corp', logoUrl: '' },
             { id: 'r3', name: 'Global Ventures', logoUrl: '' },
             { id: 'r4', name: 'Future Systems', logoUrl: '' },
           ]);
-        } else {
-          setRecruitersData(recruiters);
         }
         
       } catch (error) {

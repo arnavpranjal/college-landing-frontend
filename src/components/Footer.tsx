@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="text-center">
           <p className="text-sm text-gray-300">
-            Copyright © 2025, FusionSkill. All Rights Reserved
+            Copyright © 2025, FusionSchool. All Rights Reserved
           </p>
         </div>
       </div>
